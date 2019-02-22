@@ -61,7 +61,7 @@ namespace x_util
 		}
 
 		template<class Func
-			, typename = typename std::enable_if<std::is_same<void, function_traits<Func>::value>>::type>
+			, typename = typename std::enable_if<std::is_same<void, callable_traits<Func>::return_type>::value>::type>
 		EventCookie once(const EventType& eventid, const Func& callback)
 		{
 			EventCookie cookie;
