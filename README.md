@@ -6,6 +6,9 @@ fix me up
 1) Didn't support callback with return value, because I'm cannot find a suitable way to 
 distinguish between "void emit(const EventType& eventid, Ret& value, Args&& ... args)" 
 
+2) Because use of std::move to pas the param, param pass to the event emit cannot use anymore... 
+   It is recommended to send a temporary parameter to call emit func.
+   
 Example:
 
 #include "event_emitter.h"
@@ -54,7 +57,7 @@ int main(void)
 	emitter.on("test1", fnTest1);
 	emitter.on("test2", fnTest2);
 	emitter.emit("test", iParam, strParam);
-	emitter.emit("test1", iParam, strParam, dParam);
+	emitter.emit("test1", iParam, strParam, dParam);	// strParam is empty now!!!!!!!!!!!!!
 	emitter.emit("test2", strParam, iParam, dParam);
 
 	return 0;
