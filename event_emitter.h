@@ -14,6 +14,7 @@
 
 #include "event_listener.h"
 
+//#define _ENABLE_MULTITHREAD
 namespace x_util
 {
 
@@ -100,7 +101,7 @@ namespace x_util
 			return cookie;
 		}
 
-		// fix me up
+		// fix me
 		//template <class Ret, typename ... Args>
 		//void emit(const EventType& eventid, Ret& value, Args&& ... args)
 		//{
@@ -123,23 +124,43 @@ namespace x_util
 		void emit(const EventType& eventid, Args&& ... args)
 		{
 			event_listener_ptr pListener = nullptr;
+			std::unordered_map < EventType, event_listener_list> listeners;
 
-			auto itls = m_mapListener.find(eventid);
+			{
+#if defined(_ENABLE_MULTITHREAD)
+				std::unique_lock<std::mutex> lock(m_lock);
+#endif
+				listeners = m_mapListener;								// copy to deal with: remove listener in callback
+			}
 
-			if (itls != m_mapListener.end())
+			// do callback with no lock
+			auto itls = listeners.find(eventid);
+
+			if (itls != listeners.end())
 			{
 				auto& ls = itls->second;
 				for each(auto& item in ls)
 				{
 					event_listener_t<void, Args...>* callback = (event_listener_t<void, Args...>*)(item.get());
 					(*callback)(std::forward<Args>(args)...);
-					
-					bool bOnce = item->call_once();
-					if (bOnce)
+				}
+			}
+
+			{
+				// remove callonce
+#if defined(_ENABLE_MULTITHREAD)
+				std::unique_lock<std::mutex> lock(m_lock);
+#endif
+				auto itls = m_mapListener.find(eventid);
+
+				if (itls != m_mapListener.end())
+				{
+					auto& ls = itls->second;
+					auto fn = [](event_listener_ptr& item)
 					{
-						// fix me up
-						// remove it
-					}
+						return item->call_once();
+					};
+					auto it = ls.erase(std::remove_if(ls.begin(), ls.end(), std::move(fn)) , ls.end());
 				}
 			}
 		}
@@ -154,12 +175,38 @@ namespace x_util
 		std::size_t listener_count(const EventType& event)
 		{
 			std::size_t count = 0;
+			// not impl
 
 			return count;
 		}
 
 		private:
 			EventCookie insert(const EventType& eventid, event_listener_ptr pListener)
+			{
+#if defined(_ENABLE_MULTITHREAD)
+				std::unique_lock<std::mutex> lock(m_lock);
+#endif
+				return _insert(eventid, pListener);
+			}
+
+			bool remove(const EventCookie& cookie)
+			{
+#if defined(_ENABLE_MULTITHREAD)
+				std::unique_lock<std::mutex> lock(m_lock);
+#endif
+				return _remove(cookie);
+			}
+
+			bool remove(const EventType& eventid, const EventCookie& cookie)
+			{
+#if defined(_ENABLE_MULTITHREAD)
+				std::unique_lock<std::mutex> lock(m_lock);
+#endif
+				return _remove(eventid, cookie);
+			}
+
+			// lockless
+			EventCookie _insert(const EventType& eventid, event_listener_ptr pListener)
 			{
 				EventCookie cookie;
 				auto itls = m_mapListener.find(eventid);
@@ -181,7 +228,7 @@ namespace x_util
 				return cookie;
 			}
 
-			bool remove(const EventCookie& cookie)
+			bool _remove(const EventCookie& cookie)
 			{
 				bool bSuc = false;
 				auto itls = m_mapListener.begin();
@@ -190,15 +237,16 @@ namespace x_util
 				{
 					auto eventid = itls.first;
 
-					bSuc = remove(eventid, cookie);
-					if(bSuc) break;
+					bSuc = _remove(eventid, cookie);
+					if (bSuc) break;
 
 					++itls;
 				}
 
 				return bSuc;
 			}
-			bool remove(const EventType& eventid, const EventCookie& cookie)
+
+			bool _remove(const EventType& eventid, const EventCookie& cookie)
 			{
 				bool bSuc = false;
 				auto itls = m_mapListener.find(eventid);
@@ -217,6 +265,9 @@ namespace x_util
 	private:
 
 		std::unordered_map < EventType, event_listener_list> m_mapListener;
+#if defined(_ENABLE_MULTITHREAD)
+		std::mutex    m_lock;
+#endif
 	};
 }
 #endif
