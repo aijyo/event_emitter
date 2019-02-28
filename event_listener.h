@@ -43,8 +43,8 @@ namespace x_util
 	class event_listener_t : public event_listener_base
 	{
 	public:
-		virtual Ret operator()(Args&&... args) = 0;
-		virtual Ret Invoke(Args&&... args) = 0;
+		virtual Ret operator()(Args... args) = 0;
+		virtual Ret Invoke(Args... args) = 0;
 
 	};
 	template<class Ld>
@@ -86,12 +86,12 @@ namespace x_util
 
 		}
 
-		Ret operator()(Args&&... args)
+		Ret operator()(Args... args)
 		{
 			return Invoke(std::forward<Args>(args) ...);
 		}
 
-		Ret Invoke(Args&&... args)
+		Ret Invoke(Args... args)
 		{
 			return m_fnCallback(std::forward<Args>(args) ...);
 		}
@@ -110,12 +110,12 @@ namespace x_util
 
 		}
 
-		Ret operator()(Args&&... args)
+		Ret operator()(Args... args)
 		{
 			return Invoke(std::forward<Args>(args) ...);
 		}
 
-		Ret Invoke(Args&&... args)
+		Ret Invoke(Args... args)
 		{
 			return m_fnCallback(std::forward<Args>(args) ...);
 		}
@@ -142,12 +142,12 @@ namespace x_util
 
 		}
 
-		ReturnType operator()(Args&&... args)
+		ReturnType operator()(Args... args)
 		{
 			return Invoke(std::forward<Args>(args) ...);
 		}
 
-		ReturnType Invoke(Args&&... args)
+		ReturnType Invoke(Args... args)
 		{
 			return (m_pInstance->*m_pFunc)(std::forward<Args>(args) ...);
 		}
@@ -174,12 +174,12 @@ namespace x_util
 
 		}
 
-		ReturnType operator()(Args&&... args)
+		ReturnType operator()(Args... args)
 		{
 			return Invoke(std::forward<Args>(args) ...);
 		}
 
-		ReturnType Invoke(Args&&... args)
+		ReturnType Invoke(Args... args)
 		{
 			return (*m_pFunc)(std::forward<Args>(args) ...);
 		}

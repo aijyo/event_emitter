@@ -121,7 +121,7 @@ namespace x_util
 		//}
 
 		template <typename ... Args>
-		void emit(const EventType& eventid, Args&& ... args)
+		void emit(const EventType& eventid, Args ... args)
 		{
 			event_listener_ptr pListener = nullptr;
 			std::unordered_map < EventType, event_listener_list> listeners;
@@ -142,7 +142,8 @@ namespace x_util
 				for each(auto& item in ls)
 				{
 					event_listener_t<void, Args...>* callback = (event_listener_t<void, Args...>*)(item.get());
-					(*callback)(std::forward<Args>(args)...);
+					//(*callback)(std::forward<Args>(args)...);
+					(*callback)(args ...);
 				}
 			}
 
