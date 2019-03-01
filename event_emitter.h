@@ -232,16 +232,16 @@ namespace x_util
 			bool _remove(const EventCookie& cookie)
 			{
 				bool bSuc = false;
-				auto itls = m_mapListener.begin();
+				auto it = m_mapListener.begin();
 
-				while (itls != m_mapListener.end())
+				while (it != m_mapListener.end())
 				{
-					auto eventid = itls.first;
+					auto eventid = it->first;
 
 					bSuc = _remove(eventid, cookie);
 					if (bSuc) break;
 
-					++itls;
+					++it;
 				}
 
 				return bSuc;
@@ -250,15 +250,18 @@ namespace x_util
 			bool _remove(const EventType& eventid, const EventCookie& cookie)
 			{
 				bool bSuc = false;
-				auto itls = m_mapListener.find(eventid);
-				bool bExist = itls != m_mapListener.end();
+				auto it = m_mapListener.find(eventid);
+				bool bExist = it != m_mapListener.end();
 				if (bExist)
 				{
 					//
-					auto it = std::remove_if(itls.begin(), itls.end(), [&cookie](event_listener_ptr& pItem)
+					auto cmp = [&cookie](event_listener_ptr& pItem)
 					{
-						return pItem->is_equal(cookie);
-					};);
+						return pItem->is_equal((void*)cookie);
+					};
+					auto& itls = it->second;
+					auto it = std::remove_if(itls.begin(), itls.end(), std::move(cmp));
+					bSuc = it != itls.end();
 					itls.erase(it, itls.end());
 				}
 				return bSuc;
