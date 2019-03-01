@@ -54,14 +54,19 @@ int main(void)
 	double dParam = 2.0;
 	std::string strParam = "z";
 
-	emitter.on("test", fn);
+	auto cooike = emitter.on("test", fn);
 	emitter.on("test", fnTest);
 	emitter.on("test", &t, &test::fn);
 	emitter.on("test1", fnTest1);
 	emitter.on("test2", fnTest2);
+	emitter.once("test2", fnTest2);
 	emitter.emit("test", iParam, strParam);
-	emitter.emit("test1", iParam, strParam, dParam);	
+	emitter.emit("test1", iParam, strParam, dParam);
 	emitter.emit("test2", strParam, iParam, dParam);
+	emitter.emit("test2", strParam, iParam, dParam);
+
+	emitter.cancle(cooike);
+	emitter.emit("test", iParam, strParam);
 
 	return 0;
 }
